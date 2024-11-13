@@ -35,10 +35,15 @@ table {
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
 }
 
-th, td {
+th,
+td {
     border: 1px solid #ddd;
     padding: 12px;
     text-align: left;
+}
+
+td:last-child {
+    text-align: center;
 }
 
 th {
@@ -53,4 +58,18 @@ tr:nth-child(even) {
 
 tr:hover {
     background-color: #e8e8e8;
+}
+
+.delete-btn {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.delete-btn:hover {
+    background-color: #c82333;
 }

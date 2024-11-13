@@ -1,4 +1,4 @@
-// server/router.js
+
 const express = require('express');
 const router = express.Router();
 const services = require('./services');
@@ -11,5 +11,6 @@ router.get('/', (req, res) => {
 
 router.get('/notes', services.getNotes);
 router.post('/notes', services.addNote);
+router.delete('/notes/:id', services.deleteNote);
 
 module.exports = router;
