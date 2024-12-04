@@ -7,5 +7,14 @@
     "tags": [
       "Notes"
     ]
+  },
+  {
+    "id": 2,
+    "title": "Do Laundry",
+    "content": "Note to do laundry",
+    "dateCreated": "2024-12-04",
+    "tags": [
+      "Reminder"
+    ]
   }
 ]

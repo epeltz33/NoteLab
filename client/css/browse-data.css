@@ -1,0 +1,100 @@
+/* Browse Data Page Styles */
+body {
+  font-family: 'Poppins', sans-serif;
+  background: #f5f7fa;
+  color: #333;
+  line-height: 1.6;
+}
+
+.container {
+  max-width: 800px;
+  margin: 40px auto;
+  padding: 30px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.record-display {
+  padding: 20px;
+  margin-bottom: 20px;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  background-color: #fafafa;
+}
+
+.record-field {
+  margin-bottom: 15px;
+}
+
+.field-label {
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 5px;
+  display: block;
+}
+
+.field-value {
+  color: #34495e;
+  font-size: 1.1em;
+}
+
+.navigation-buttons {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 30px;
+}
+
+.nav-button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.nav-button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+.prev-button {
+  background-color: #3498db;
+  color: white;
+}
+
+.prev-button:hover:not(:disabled) {
+  background-color: #2980b9;
+}
+
+.next-button {
+  background-color: #3498db;
+  color: white;
+}
+
+.next-button:hover:not(:disabled) {
+  background-color: #2980b9;
+}
+
+.tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 5px;
+}
+
+.tag {
+  background-color: #e1f0fa;
+  color: #2980b9;
+  padding: 4px 12px;
+  border-radius: 15px;
+  font-size: 0.9em;
+}
+
+.no-records {
+  text-align: center;
+  color: #666;
+  padding: 20px;
+  font-style: italic;
+}

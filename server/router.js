@@ -9,6 +9,11 @@ router.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../client/notelab.html'));
 });
 
+router.get('/browse-data', (req, res) => {
+    res.sendFile(path.join(__dirname, '../client/browse-data.html'));
+});
+
+
 router.get('/notes', services.getNotes);
 router.post('/notes', services.addNote);
 router.delete('/notes/:id', services.deleteNote);

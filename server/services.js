@@ -13,28 +13,34 @@ function getNotes(req, res) {
         const data = fs.readFileSync(dataFile, 'utf8');
         res.json(JSON.parse(data));
     } catch (err) {
+        console.error('Error reading notes:', err);
         res.status(500).json({ error: 'Error reading notes' });
     }
 }
 
 function addNote(req, res) {
     try {
-        // Read the notes from the file  and parse the JSON
         const notes = JSON.parse(fs.readFileSync(dataFile, 'utf8'));
+
+        // Handle tags properly - ensure it's not undefined
+        let tags = [];
+        if (req.body.tags) {
+            tags = req.body.tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
+        }
+
         const newNote = {
-            // Generate a new ID by incrementing the last note's ID
-            id: notes.length > 0 ? notes[notes.length - 1].id + 1 : 1,
+            id: notes.length > 0 ? Math.max(...notes.map(note => note.id)) + 1 : 1,
             title: req.body.title,
             content: req.body.content,
-            //  'T' stands for time, so we split at 'T' to get only the date part of the ISO string
             dateCreated: new Date().toISOString().split('T')[0],
-            tags: req.body.tags.split(',').map(tag => tag.trim())
+            tags: tags
         };
 
         notes.push(newNote);
         fs.writeFileSync(dataFile, JSON.stringify(notes, null, 2));
         res.status(201).json(newNote);
     } catch (err) {
+        console.error('Error saving note:', err);
         res.status(500).json({ error: 'Error saving note' });
     }
 }
@@ -44,18 +50,16 @@ function deleteNote(req, res) {
         const noteId = parseInt(req.params.id);
         let notes = JSON.parse(fs.readFileSync(dataFile, 'utf8'));
 
-        // Filter out the note with the specified ID
         const filteredNotes = notes.filter(note => note.id !== noteId);
 
-        // If the length hasn't changed, the note wasn't found
         if (filteredNotes.length === notes.length) {
             return res.status(404).json({ error: 'Note not found' });
         }
 
-        // Write the filtered notes back to the file
         fs.writeFileSync(dataFile, JSON.stringify(filteredNotes, null, 2));
         res.status(200).json({ message: 'Note deleted successfully' });
     } catch (err) {
+        console.error('Error deleting note:', err);
         res.status(500).json({ error: 'Error deleting note' });
     }
 }

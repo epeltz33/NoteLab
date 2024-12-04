@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="noteLab">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Browse Data - NoteLab</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/browse-data.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Load AngularJS before any other scripts -->
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
+</head>
+
+<body>
+  <header>
+    <h1>NoteLab</h1>
+    <nav>
+      <ul>
+        <li><a href="notelab.html">Home</a></li>
+        <li><a href="write-data.html">Enter Data</a></li>
+        <li><a href="view-data.html">View Data</a></li>
+        <li><a href="browse-data.html">Browse Data</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main ng-controller="BrowseController">
+    <div class="container">
+      <div ng-if="records.length === 0" class="no-records">
+        No records found
+      </div>
+      <div ng-if="records.length > 0" class="record-display">
+        <div class="record-field">
+          <span class="field-label">Title:</span>
+          <div class="field-value">{{currentRecord.title}}</div>
+        </div>
+        <div class="record-field">
+          <span class="field-label">Content:</span>
+          <div class="field-value">{{currentRecord.content}}</div>
+        </div>
+        <div class="record-field">
+          <span class="field-label">Date Created:</span>
+          <div class="field-value">{{currentRecord.dateCreated}}</div>
+        </div>
+        <div class="record-field">
+          <span class="field-label">Tags:</span>
+          <div class="tags-container">
+            <span class="tag" ng-repeat="tag in currentRecord.tags">{{tag}}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="navigation-buttons">
+        <button class="nav-button prev-button" ng-click="previousRecord()" ng-disabled="currentIndex === 0">
+          Previous Record
+        </button>
+        <button class="nav-button next-button" ng-click="nextRecord()"
+          ng-disabled="currentIndex === records.length - 1">
+          Next Record
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2024 NoteLab. All rights reserved.</p>
+  </footer>
+
+  <!-- Load the controller script after AngularJS -->
+  <script src="js/browse-data.js"></script>
+</body>
+
+</html>

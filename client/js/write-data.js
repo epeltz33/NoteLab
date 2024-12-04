@@ -1,32 +1,38 @@
-document.getElementById('data-form').addEventListener('submit', async function(e) {
-    e.preventDefault();
+// Initialize the Angular module
+angular.module('noteLab', [])
+    .controller('WriteController', function($scope, $http) {
+        // Initialize the note object
+        $scope.note = {
+            title: '',
+            content: '',
+            tags: ''
+        };
 
-    const formData = {
-        title: document.getElementById('title').value,
-        content: document.getElementById('content').value,
-        tags: document.getElementById('tags').value
-    };
+        // Form submission handler
+        $scope.submitForm = function() {
+            const formData = {
+                title: $scope.note.title,
+                content: $scope.note.content,
+                tags: $scope.note.tags || ''  // Ensure tags is never undefined
+            };
 
-    try {
-        const response = await fetch('http://localhost:3000/notes', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(formData)
-        });
+            $http.post('http://localhost:3000/notes', formData)
+                .then(function(response) {
+                    alert('Note saved successfully!');
+                    $scope.clearForm();
+                })
+                .catch(function(error) {
+                    console.error('Error:', error);
+                    alert('Error saving note');
+                });
+        };
 
-        if (response.ok) {
-            alert('Note saved successfully!');
-            document.getElementById('data-form').reset();
-        } else {
-            alert('Error saving note');
-        }
-    } catch (err) {
-        alert('Error connecting to server');
-    }
-});
-
-document.getElementById('clear-btn').addEventListener('click', function() {
-    document.getElementById('data-form').reset();
-});
+        // Clear form handler
+        $scope.clearForm = function() {
+            $scope.note = {
+                title: '',
+                content: '',
+                tags: ''
+            };
+        };
+    });
