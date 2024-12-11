@@ -26,9 +26,9 @@ async function populateTable() {
             tableBody.appendChild(row);
         });
 
-        // Optionally, you could display pagination info
+        //
         const paginationInfo = `Page ${data.currentPage} of ${data.totalPages} (${data.totalNotes} total notes)`;
-        // Add pagination info to your UI if desired
+
 
     } catch (err) {
         console.error('Error fetching notes:', err);

@@ -8,7 +8,7 @@ async function getNotes(req, res) {
         const limit = parseInt(req.query.limit) || 10;
         const skip = (page - 1) * limit;
 
-        // Get paginated notes with sorting
+        // Get notes with sorting
         const notes = await getDb()
             .collection(COLLECTIONS.NOTES)
             .find({})

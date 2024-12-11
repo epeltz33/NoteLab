@@ -17,7 +17,7 @@ noteLabBrowse.controller('BrowseController', function($scope, $http) {
     function loadRecords() {
         $http.get('http://localhost:3000/notes')
             .then(function(response) {
-                // Get the notes array from the paginated response
+                // Get the notes array
                 $scope.records = response.data.notes || [];
                 $scope.pagination.currentPage = response.data.currentPage;
                 $scope.pagination.totalPages = response.data.totalPages;
