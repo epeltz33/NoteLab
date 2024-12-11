@@ -4,35 +4,35 @@ async function populateTable() {
 
     try {
         const response = await fetch('http://localhost:3000/notes');
-        const notes = await response.json();
+        const data = await response.json();
+        // Get the notes array from the paginated response
+        const notes = data.notes || [];
 
         notes.forEach(note => {
             const row = document.createElement("tr");
+            // Format the date to be more readable
+            const formattedDate = new Date(note.dateCreated).toLocaleDateString();
+
             row.innerHTML = `
-                <td>${note.id}</td>
+                <td>${note._id}</td>
                 <td>${note.title}</td>
                 <td>${note.content}</td>
-                <td>${note.dateCreated}</td>
+                <td>${formattedDate}</td>
                 <td>${note.tags.join(", ")}</td>
                 <td>
-                    <button class="delete-btn" data-id="${note.id}">Delete</button>
+                    <button class="delete-btn" data-id="${note._id}">Delete</button>
                 </td>
             `;
             tableBody.appendChild(row);
         });
 
-        // Activate delete button listeners after adding them to the DOM
-        activateDeleteButtons();
+        // Optionally, you could display pagination info
+        const paginationInfo = `Page ${data.currentPage} of ${data.totalPages} (${data.totalNotes} total notes)`;
+        // Add pagination info to your UI if desired
+
     } catch (err) {
         console.error('Error fetching notes:', err);
     }
-}
-
-function activateDeleteButtons() {
-    const deleteButtons = document.querySelectorAll('.delete-btn');
-    deleteButtons.forEach(button => {
-        button.addEventListener('click', handleDelete);
-    });
 }
 
 async function handleDelete(event) {
@@ -48,13 +48,21 @@ async function handleDelete(event) {
                 // Refresh the table after successful deletion
                 populateTable();
             } else {
-                alert('Error deleting note');
+                const errorData = await response.json();
+                alert(errorData.error || 'Error deleting note');
             }
         } catch (err) {
             console.error('Error:', err);
             alert('Error connecting to server');
         }
     }
+}
+
+function activateDeleteButtons() {
+    const deleteButtons = document.querySelectorAll('.delete-btn');
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', handleDelete);
+    });
 }
 
 document.addEventListener('DOMContentLoaded', populateTable);
