@@ -1,68 +1,104 @@
-async function populateTable() {
-    const tableBody = document.querySelector("#dataTable tbody");
-    tableBody.innerHTML = '';
+angular.module('noteLab', [])
+    .controller('ViewDataController', function($scope, $http) {
+        $scope.notes = [];
+        $scope.types = [];
+        $scope.selectedType = '';
 
-    try {
-        const response = await fetch('http://localhost:3000/notes');
-        const data = await response.json();
-        // Get the notes array from the paginated response
-        const notes = data.notes || [];
-
-        notes.forEach(note => {
-            const row = document.createElement("tr");
-            // Format the date to be more readable
-            const formattedDate = new Date(note.dateCreated).toLocaleDateString();
-
-            row.innerHTML = `
-                <td>${note._id}</td>
-                <td>${note.title}</td>
-                <td>${note.content}</td>
-                <td>${formattedDate}</td>
-                <td>${note.tags.join(", ")}</td>
-                <td>
-                    <button class="delete-btn" data-id="${note._id}">Delete</button>
-                </td>
-            `;
-            tableBody.appendChild(row);
-        });
-
-        //
-        const paginationInfo = `Page ${data.currentPage} of ${data.totalPages} (${data.totalNotes} total notes)`;
-
-
-    } catch (err) {
-        console.error('Error fetching notes:', err);
-    }
-}
-
-async function handleDelete(event) {
-    const deleteId = this.getAttribute("data-id");
-
-    if (confirm('Are you sure you want to delete this note?')) {
-        try {
-            const response = await fetch(`http://localhost:3000/notes/${deleteId}`, {
-                method: 'DELETE'
-            });
-
-            if (response.ok) {
-                // Refresh the table after successful deletion
-                populateTable();
-            } else {
-                const errorData = await response.json();
-                alert(errorData.error || 'Error deleting note');
-            }
-        } catch (err) {
-            console.error('Error:', err);
-            alert('Error connecting to server');
+        // Debug log function
+        function logDebug(message, data) {
+            console.log(`[Debug] ${message}`, data || '');
         }
-    }
-}
 
-function activateDeleteButtons() {
-    const deleteButtons = document.querySelectorAll('.delete-btn');
-    deleteButtons.forEach(button => {
-        button.addEventListener('click', handleDelete);
+        // Fetch all notes
+        $scope.loadNotes = function() {
+            logDebug('Attempting to load notes...');
+
+            $http({
+                method: 'GET',
+                url: 'http://localhost:3000/notes',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            }).then(function(response) {
+                logDebug('Server response:', response);
+
+                if (response.data && response.data.msg === "SUCCESS") {
+                    $scope.notes = response.data.notes;
+                    logDebug('Notes loaded:', $scope.notes);
+
+                    // Extract unique types
+                    $scope.types = [...new Set($scope.notes
+                        .map(note => note.type)
+                        .filter(type => type))];
+                    logDebug('Types extracted:', $scope.types);
+                } else {
+                    console.error('Server returned error:', response.data);
+                }
+            }).catch(function(error) {
+                console.error('Error fetching notes:', error);
+                if (error.data) {
+                    console.error('Error details:', error.data);
+                }
+            });
+        };
+
+        // Filter notes by type
+        $scope.filterByType = function() {
+            logDebug('Filtering by type:', $scope.selectedType);
+
+            if (!$scope.selectedType) {
+                $scope.loadNotes();
+                return;
+            }
+
+            $http({
+                method: 'GET',
+                url: `http://localhost:3000/notes/type/${$scope.selectedType}`,
+                headers: {
+                    'Accept': 'application/json'
+                }
+            }).then(function(response) {
+                logDebug('Filter response:', response);
+
+                if (response.data && response.data.msg === "SUCCESS") {
+                    $scope.notes = response.data.notes;
+                } else {
+                    console.error('Filter error:', response.data);
+                }
+            }).catch(function(error) {
+                console.error('Error filtering notes:', error);
+            });
+        };
+
+        // Delete note
+        $scope.deleteNote = function(noteId) {
+            if (!noteId) {
+                console.error('No note ID provided for deletion');
+                return;
+            }
+
+            if (confirm('Are you sure you want to delete this note?')) {
+                logDebug('Attempting to delete note:', noteId);
+
+                $http({
+                    method: 'DELETE',
+                    url: `http://localhost:3000/notes/${noteId}`,
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                }).then(function(response) {
+                    logDebug('Delete response:', response);
+
+                    if (response.data && response.data.msg === "SUCCESS") {
+                        $scope.loadNotes();
+                    }
+                }).catch(function(error) {
+                    console.error('Error deleting note:', error);
+                });
+            }
+        };
+
+        // Initialize
+        logDebug('Initializing controller...');
+        $scope.loadNotes();
     });
-}
-
-document.addEventListener('DOMContentLoaded', populateTable);

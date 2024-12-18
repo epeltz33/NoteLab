@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" ng-app="noteLab">
 
 <head>
     <meta charset="UTF-8">
@@ -7,9 +7,11 @@
     <title>View Data - NoteLab</title>
     <link rel="stylesheet" href="css/view-data.css">
     <link rel="stylesheet" href="css/styles.css">
+    <!-- Add AngularJS -->
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
 </head>
 
-<body>
+<body ng-controller="ViewDataController">
     <header>
         <h1>NoteLab</h1>
         <nav>
@@ -20,22 +22,55 @@
                 <li><a href="browse-data.html">Browse Data</a></li>
             </ul>
         </nav>
+    </header>
 
-        <table id="dataTable">
+    <main class="container">
+        <div class="filter-section" ng-if="notes.length > 0">
+            <label for="typeFilter">Filter by Type:</label>
+            <select id="typeFilter" ng-model="selectedType" ng-change="filterByType()">
+                <option value="">All Types</option>
+                <option ng-repeat="type in types" value="{{type}}">{{type}}</option>
+            </select>
+        </div>
+
+        <!-- Debug info -->
+        <div ng-if="notes.length === 0" style="color: gray; margin: 20px;">
+            No notes found. Check console for debug information.
+        </div>
+
+        <table id="dataTable" ng-if="notes.length > 0">
             <thead>
                 <tr>
-                    <th>ID</th>
                     <th>Title</th>
                     <th>Content</th>
+                    <th>Type</th>
                     <th>Date Created</th>
                     <th>Tags</th>
                     <th>Actions</th>
                 </tr>
             </thead>
-            <tbody></tbody>
+            <tbody>
+                <tr ng-repeat="note in notes">
+                    <td>{{note.title}}</td>
+                    <td>{{note.content}}</td>
+                    <td>{{note.type}}</td>
+                    <td>{{note.dateCreated | date:'MM/dd/yyyy'}}</td>
+                    <td>{{note.tags.join(", ")}}</td>
+                    <td>
+                        <button class="edit-btn" ng-click="editNote(note)">Edit</button>
+                        <button class="delete-btn" ng-click="deleteNote(note._id)">Delete</button>
+                    </td>
+                </tr>
+            </tbody>
         </table>
+    </main>
 
-        <script src="js/view-data.js"></script>
+    <footer>
+        <p>&copy; 2024 NoteLab. All rights reserved.</p>
+    </footer>
+
+    <!-- Add the controller script -->
+    <script src="js/view-data.js"></script>
 </body>
 
 </html>

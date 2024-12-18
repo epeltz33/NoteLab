@@ -1,202 +1,190 @@
-const { ObjectId } = require('mongodb');
-const { getDb, COLLECTIONS } = require('./config/db');
+const { MongoClient, ObjectId } = require('mongodb');
 
-async function getNotes(req, res) {
-    try {
-        // Parse pagination parameters
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 10;
-        const skip = (page - 1) * limit;
+const dbURL = process.env.DB_URI || "mongodb://127.0.0.1:27017";
+const dbName = "notelab";
+const client = new MongoClient(dbURL, { useUnifiedTopology: true });
 
-        // Get notes with sorting
-        const notes = await getDb()
-            .collection(COLLECTIONS.NOTES)
-            .find({})
-            .sort({ dateCreated: -1 })
-            .skip(skip)
-            .limit(limit)
-            .toArray();
+var services = function(app) {
+    // Debug endpoint to test API
+    app.get('/api-test', (req, res) => {
+        res.json({ msg: "API is working" });
+    });
 
-        // Get total count for pagination
-        const total = await getDb()
-            .collection(COLLECTIONS.NOTES)
-            .countDocuments();
+    // GET: Retrieve all notes
+    app.get('/notes', async function(req, res) {
+        console.log('GET /notes - Retrieving all notes'); // Debug log
 
-        res.json({
-            notes,
-            currentPage: page,
-            totalPages: Math.ceil(total / limit),
-            totalNotes: total
-        });
-    } catch (err) {
-        console.error('Error reading notes:', err);
-        res.status(500).json({ error: 'Error reading notes' });
-    }
-}
+        try {
+            const conn = await client.connect();
+            const db = conn.db(dbName);
+            const notes = await db.collection('notes')
+                .find({})
+                .sort({ dateCreated: -1 })
+                .toArray();
 
-async function addNote(req, res) {
-    try {
-        // Validate required fields
-        if (!req.body.title || !req.body.content) {
+            console.log(`Found ${notes.length} notes`); // Debug log
+
+            await conn.close();
+            return res.json({
+                msg: "SUCCESS",
+                notes: notes
+            });
+        } catch(err) {
+            console.error('Database error:', err); // Error log
+            await client.close();
+            return res.status(500).json({
+                msg: "Error: " + err.message
+            });
+        }
+    });
+
+    // GET: Retrieve notes by type
+    app.get('/notes/type/:type', async function(req, res) {
+        console.log(`GET /notes/type/${req.params.type}`); // Debug log
+
+        try {
+            const conn = await client.connect();
+            const db = conn.db(dbName);
+            const notes = await db.collection('notes')
+                .find({ type: req.params.type })
+                .sort({ dateCreated: -1 })
+                .toArray();
+
+            console.log(`Found ${notes.length} notes of type ${req.params.type}`); // Debug log
+
+            await conn.close();
+            return res.json({
+                msg: "SUCCESS",
+                notes: notes
+            });
+        } catch(err) {
+            console.error('Database error:', err);
+            await client.close();
+            return res.status(500).json({
+                msg: "Error: " + err.message
+            });
+        }
+    });
+
+    // POST: Add a new note
+    app.post('/notes', async function(req, res) {
+        console.log('POST /notes - Adding new note:', req.body); // Debug log
+
+        if (!req.body.title || !req.body.content || !req.body.type) {
             return res.status(400).json({
-                error: 'Title and content are required fields'
+                msg: "Title, content, and type are required fields"
             });
         }
 
-        // Process tags: split by comma, trim whitespace, remove empty tags
-        const tags = req.body.tags ?
-            req.body.tags.split(',')
-                .map(tag => tag.trim())
-                .filter(tag => tag.length > 0) :
-            [];
-
-        // Create note document
         const note = {
             title: req.body.title,
+            type: req.body.type,
             content: req.body.content,
             dateCreated: new Date(),
-            tags: tags
+            tags: req.body.tags || []
         };
 
-        // Insert note into database
-        const result = await getDb()
-            .collection(COLLECTIONS.NOTES)
-            .insertOne(note);
+        try {
+            const conn = await client.connect();
+            const db = conn.db(dbName);
+            const result = await db.collection('notes').insertOne(note);
 
-        // Return created note with its ID
-        res.status(201).json({
-            ...note,
-            _id: result.insertedId
-        });
-    } catch (err) {
-        console.error('Error saving note:', err);
-        res.status(500).json({ error: 'Error saving note' });
-    }
-}
+            console.log('Note added successfully:', result.insertedId); // Debug log
 
-async function deleteNote(req, res) {
-    try {
-        // Validate ID format
-        if (!ObjectId.isValid(req.params.id)) {
-            return res.status(400).json({
-                error: 'Invalid note ID format'
+            await conn.close();
+            return res.status(201).json({
+                msg: "SUCCESS",
+                note: { ...note, _id: result.insertedId }
+            });
+        } catch(err) {
+            console.error('Database error:', err);
+            await client.close();
+            return res.status(500).json({
+                msg: "Error: " + err.message
             });
         }
+    });
 
-        // Attempt to delete the note
-        const result = await getDb()
-            .collection(COLLECTIONS.NOTES)
-            .deleteOne({ _id: new ObjectId(req.params.id) });
+    // PUT: Update a note
+    app.put('/notes/:id', async function(req, res) {
+        console.log(`PUT /notes/${req.params.id}`, req.body); // Debug log
 
-        // Check if note was found and deleted
-        if (result.deletedCount === 0) {
-            return res.status(404).json({
-                error: 'Note not found'
-            });
-        }
-
-        res.status(200).json({
-            message: 'Note deleted successfully'
-        });
-    } catch (err) {
-        console.error('Error deleting note:', err);
-        res.status(500).json({ error: 'Error deleting note' });
-    }
-}
-
-// New function to get a single note by ID
-async function getNoteById(req, res) {
-    try {
-        // Validate ID format
-        if (!ObjectId.isValid(req.params.id)) {
-            return res.status(400).json({
-                error: 'Invalid note ID format'
-            });
-        }
-
-        // Find the note
-        const note = await getDb()
-            .collection(COLLECTIONS.NOTES)
-            .findOne({ _id: new ObjectId(req.params.id) });
-
-        // Check if note exists
-        if (!note) {
-            return res.status(404).json({
-                error: 'Note not found'
-            });
-        }
-
-        res.json(note);
-    } catch (err) {
-        console.error('Error finding note:', err);
-        res.status(500).json({ error: 'Error finding note' });
-    }
-}
-
-// New function to update a note
-async function updateNote(req, res) {
-    try {
-        // Validate ID format
-        if (!ObjectId.isValid(req.params.id)) {
-            return res.status(400).json({
-                error: 'Invalid note ID format'
-            });
-        }
-
-        // Validate required fields
-        if (!req.body.title || !req.body.content) {
-            return res.status(400).json({
-                error: 'Title and content are required fields'
-            });
-        }
-
-        // Process tags
-        const tags = req.body.tags ?
-            req.body.tags.split(',')
-                .map(tag => tag.trim())
-                .filter(tag => tag.length > 0) :
-            [];
-
-        // Create update document
-        const updatedNote = {
-            title: req.body.title,
-            content: req.body.content,
-            tags: tags,
-            lastModified: new Date()
-        };
-
-        // Update the note
-        const result = await getDb()
-            .collection(COLLECTIONS.NOTES)
-            .updateOne(
+        try {
+            const conn = await client.connect();
+            const db = conn.db(dbName);
+            const result = await db.collection('notes').updateOne(
                 { _id: new ObjectId(req.params.id) },
-                { $set: updatedNote }
+                { $set: {
+                    title: req.body.title,
+                    type: req.body.type,
+                    content: req.body.content,
+                    tags: req.body.tags || []
+                }}
             );
 
-        // Check if note was found and updated
-        if (result.matchedCount === 0) {
-            return res.status(404).json({
-                error: 'Note not found'
+            console.log('Update result:', result); // Debug log
+
+            await conn.close();
+            return res.json({
+                msg: "SUCCESS",
+                result: result
+            });
+        } catch(err) {
+            console.error('Database error:', err);
+            await client.close();
+            return res.status(500).json({
+                msg: "Error: " + err.message
             });
         }
+    });
 
-        res.json({
-            message: 'Note updated successfully',
-            note: {
-                _id: req.params.id,
-                ...updatedNote
-            }
-        });
-    } catch (err) {
-        console.error('Error updating note:', err);
-        res.status(500).json({ error: 'Error updating note' });
-    }
-}
+    // DELETE: Remove a note
+    app.delete('/notes/:id', async function(req, res) {
+        console.log(`DELETE /notes/${req.params.id}`); // Debug log
 
-module.exports = {
-    getNotes,
-    getNoteById,
-    addNote,
-    updateNote,
-    deleteNote
+        try {
+            const conn = await client.connect();
+            const db = conn.db(dbName);
+            const result = await db.collection('notes').deleteOne({
+                _id: new ObjectId(req.params.id)
+            });
+
+            console.log('Delete result:', result); // Debug log
+
+            await conn.close();
+            return res.json({
+                msg: "SUCCESS",
+                result: result
+            });
+        } catch(err) {
+            console.error('Database error:', err);
+            await client.close();
+            return res.status(500).json({
+                msg: "Error: " + err.message
+            });
+        }
+    });
 };
+
+var initializeDatabase = async function() {
+    try {
+        console.log('Connecting to MongoDB...'); // Debug log
+        const conn = await client.connect();
+        const db = conn.db(dbName);
+
+        // Create indexes
+        await db.collection('notes').createIndex({ dateCreated: -1 });
+        await db.collection('notes').createIndex({ type: 1 });
+
+        // Test the connection by counting notes
+        const count = await db.collection('notes').countDocuments();
+        console.log(`Connected to MongoDB. Found ${count} notes.`); // Debug log
+
+        await conn.close();
+    } catch(err) {
+        console.error('Database initialization error:', err);
+        throw err;
+    }
+};
+
+module.exports = { services, initializeDatabase };
