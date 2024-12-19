@@ -5,8 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>View Data - NoteLab</title>
-    <link rel="stylesheet" href="css/view-data.css">
     <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/view-data.css">
     <!-- Add AngularJS -->
     <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
 </head>
@@ -25,20 +25,19 @@
     </header>
 
     <main class="container">
-        <div class="filter-section" ng-if="notes.length > 0">
+        <div class="filter-section">
             <label for="typeFilter">Filter by Type:</label>
             <select id="typeFilter" ng-model="selectedType" ng-change="filterByType()">
                 <option value="">All Types</option>
-                <option ng-repeat="type in types" value="{{type}}">{{type}}</option>
+                <option ng-repeat="type in types track by $index" value="{{type}}">{{type}}</option>
             </select>
         </div>
 
-        <!-- Debug info -->
-        <div ng-if="notes.length === 0" style="color: gray; margin: 20px;">
+        <div ng-if="!notes.length" style="color: gray; margin: 20px;">
             No notes found. Check console for debug information.
         </div>
 
-        <table id="dataTable" ng-if="notes.length > 0">
+        <table ng-if="notes.length">
             <thead>
                 <tr>
                     <th>Title</th>
@@ -63,6 +62,40 @@
                 </tr>
             </tbody>
         </table>
+
+        <!-- Edit Modal -->
+        <div class="edit-modal" style="display: none;">
+            <div class="modal-content">
+                <h2>Edit Note</h2>
+                <div class="form-group">
+                    <label for="editTitle">Title:</label>
+                    <input type="text" id="editTitle" ng-model="editingNote.title" required>
+                </div>
+                <div class="form-group">
+                    <label for="editType">Type:</label>
+                    <select id="editType" ng-model="editingNote.type" required>
+                        <option value="">Select Type</option>
+                        <option value="Personal">Personal</option>
+                        <option value="Work">Work</option>
+                        <option value="Study">Study</option>
+                        <option value="Project">Project</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="editContent">Content:</label>
+                    <textarea id="editContent" ng-model="editingNote.content" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="editTags">Tags (comma-separated):</label>
+                    <input type="text" id="editTags" ng-model="editingNote.tags">
+                </div>
+                <div class="button-group">
+                    <button class="save-btn" ng-click="updateNote()">Save</button>
+                    <button class="cancel-btn" ng-click="cancelEdit()">Cancel</button>
+                </div>
+            </div>
+        </div>
     </main>
 
     <footer>
